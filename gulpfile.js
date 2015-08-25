@@ -6,10 +6,13 @@ var buffer = require('vinyl-buffer');
 var gutil = require('gulp-util');
 var sourcemaps = require('gulp-sourcemaps');
 var assign = require('lodash.assign');
+var nodemon = require('gulp-nodemon');
 var reactify = require('reactify');
 var babelify = require('babelify');
 var spawn = require('child_process').spawn;
-var nodes = [];
+var async = require( 'async' );
+var path = require('path');
+var node;
 
 var customOpts = {
   entries: ['./src/index.js'],
@@ -40,30 +43,11 @@ function bundle() {
     .pipe(sourcemaps.write('./')) // writes .map file
     .pipe(gulp.dest('./client/js/'));
 }
-gulp.task('server', server);
-
-gulp.task('server-watch', watchServer);
-
-function watchServer() {
-  gulp.watch(['server/*.js'], ['server']);
-}
-
-
-function server() {
-  console.log(nodes.length);
-  if(nodes.length >= 1) { 
-    console.log('killt');
-    nodes[0].kill();
-  }
-  var node = spawn('babel-node', ['server/server.js'], {stdio: 'inherit'});
-  node.on('close', function(code) {
-    console.log('closed');
-    if(code === 8) {
-     gulp.log('error detected waiting for change');
-    }
-  });
-  nodes.push(node);
-}
-
-
-gulp.task('default',['server-watch', 'js']);
+var child = require('child_process');
+gulp.task('server', function() {
+   nodemon({ script: './server/server.js'
+          , exec: 'babel-node'
+          , ext: 'html js'
+          , ignore: ['client/']});
+});
+gulp.task('default', ['js', 'server']);
